@@ -1,7 +1,12 @@
 [package]
-name = "macro-list-comp"
+name = "comp_macro"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+proc-macro = true
+
 [dependencies]
-comp_macro = { path = "comp_macro" }
+proc-macro2 = "1.0.95"
+quote = "1.0.40"
+syn = { version = "2.0.101", features = ["full"] }

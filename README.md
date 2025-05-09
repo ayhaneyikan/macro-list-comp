@@ -9,11 +9,13 @@ If unfamiliar, Python list comprehensions allow you to iterate over an iterable,
 
 For example we want to go through a list and square every value that is even:
 ```python
+# Python
 even_squared = [x*x for x in numbers if x % 2 == 0]
 ```
 
 With the completed rust macro `comp!`, we can now write the following valid rust:
 ```rust
+// Rust
 let even_squared: Vec<_> = comp![x * x for x in numbers if x % 2 == 0].collect();
 ```
 

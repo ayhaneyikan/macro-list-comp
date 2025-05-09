@@ -1,14 +1,12 @@
 // comprehension: mapping for_if_clause+
-//
 // mapping: expression
-//
 // for_if_clause: 'for' pattern 'in' expression ('if' expression)*
-//
 // pattern: name (, name)*
 
-use syn::parse::{Parse, ParseStream};
+use syn::{parse::{Parse, ParseStream}, parse_macro_input};
 use quote::{quote, ToTokens};
 use proc_macro2::TokenStream as TokenStream2;
+
 
 struct Comp {
     mapping: Mapping,
@@ -139,4 +137,15 @@ impl Parse for Condition {
         // parse the condition expression
         input.parse().map(Self)
     }
+}
+
+
+// create actual macro `comp!`
+#[proc_macro]
+pub fn comp(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    // parse input as intermediate representation
+    let c = parse_macro_input!(input as Comp);
+
+    // convert repr to TokenStream2 then TokenStream
+    quote! { #c }.into()
 }

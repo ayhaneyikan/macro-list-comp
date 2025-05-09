@@ -7,6 +7,8 @@
 // pattern: name (, name)*
 
 use syn::parse::{Parse, ParseStream};
+use quote::{quote, ToTokens};
+use proc_macro2::TokenStream as TokenStream2;
 
 struct Comp {
     mapping: Mapping,
@@ -22,6 +24,34 @@ impl Parse for Comp {
     }
 }
 
+// Using `quote` crate to convert intermediate representation into an output TokenStream
+// `quote` provides the `quote!` macro which lets you define rust code that the crate converts into an equivalent TokenStream
+// We'll use this macro to define the shape of the rust Tokens we want, and output it so the compiler knows how to expand our macro at compile-time
+impl ToTokens for Comp {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        // unpack representation
+        let Mapping(mapping) = &self.mapping;
+        let ForIfClause {
+            pattern,
+            iterable,
+            conditions,
+        } = &self.for_if_clause;
+
+        // convert each condition into its token representation
+        let conditions = conditions.iter().map(|c| {
+            let inner = &c.0;
+            quote! { #inner }
+        });
+
+        // use quote to create the token representation of the list comprehension
+        tokens.extend(quote! {
+            ::core::iter::IntoIterator::into_iter(#iterable).flat_map(move |#pattern| {
+                (true #(&& (#conditions))*).then(|| #mapping)
+            })
+        });
+    }
+}
+
 
 // Using `syn` crate for representing Rust types
 struct Mapping(syn::Expr);
@@ -34,10 +64,16 @@ impl Parse for Mapping {
     }
 }
 
+impl ToTokens for Mapping {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        self.0.to_tokens(tokens);
+    }
+}
+
 
 struct ForIfClause {
     pattern: Pattern,
-    expression: syn::Expr,
+    iterable: syn::Expr,
     // optional: zero or more conditions
     conditions: Vec<Condition>,
 }
@@ -51,14 +87,14 @@ impl Parse for ForIfClause {
         // parse `in`
         let _: syn::Token![in] = input.parse()?;
         // parse iterable expression
-        let expression = input.parse()?;
-        
+        let iterable = input.parse()?;
+
         // optionally, parse filter conditions while there are valid conditions
         let conditions = parse_zero_or_more(input);
 
         Ok(Self {
             pattern,
-            expression,
+            iterable,
             conditions,
         })
     }
@@ -83,6 +119,12 @@ impl Parse for Pattern {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         // see Mapping impl for explanation of `map()` usage
         syn::Pat::parse_single(input).map(Self)
+    }
+}
+
+impl ToTokens for Pattern {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        self.0.to_tokens(tokens);
     }
 }
 

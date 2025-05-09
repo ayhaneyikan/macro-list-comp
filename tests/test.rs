@@ -1,5 +1,5 @@
 #[cfg(test)]
-pub mod compile_pass {
+pub mod tests {
     use comp_macro::comp;
 
     #[test]

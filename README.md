@@ -12,6 +12,11 @@ For example we want to go through a list and square every value that is even:
 even_squared = [x*x for x in numbers if x % 2 == 0]
 ```
 
+With the completed rust macro `comp!`, we can now write the following valid rust:
+```rust
+let even_squared: Vec<_> = comp![x * x for x in numbers if x % 2 == 0].collect();
+```
+
 This is done using a procedural macro.
 Rust's procedural macros essentially take a series of tokens and output another (possibly different) series of tokens.
 As well-explained by Logan, a macro like this which converts Python to Rust, at its core works exactly like a compiler or transpiler.
